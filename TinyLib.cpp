@@ -524,8 +524,11 @@ static char* CreateMergedEnvironmentBlock(const char** env) {
 	// followed by a NULL slot, followed by the actual strings.
 	size_t ptrSize = sizeof(void*) * (newEnvOffsets.size() + 1);
 	char*  copy    = (char*) malloc(ptrSize + newEnv.length());
-	for (size_t i = 0; i < newEnvOffsets.size())
-		copy[i] = copy + newEnvOffsets[i];
+	char** ptrs    = (char**) copy;
+	for (size_t i = 0; i < newEnvOffsets.size(); i++) {
+		ptrs[i] = copy + ptrSize + newEnvOffsets[i];
+	}
+	ptrs[newEnvOffsets.size()] = nullptr; // terminal pointer
 	memcpy(copy + ptrSize, &newEnv[0], newEnv.length());
 	return copy;
 #endif
@@ -573,7 +576,7 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 	for (size_t i = 0; args[i]; i++)
 		all.push_back(args[i]);
 	all.push_back(nullptr);
-	void* mergedEnv = env ? CreateMergedEnvironmentBlock(env) : env;
+	void* mergedEnv = env ? CreateMergedEnvironmentBlock(env) : (char*) env;
 	pid_t pid       = fork();
 	if (pid == 0) {
 		// child
