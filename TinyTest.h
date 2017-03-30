@@ -154,7 +154,7 @@ std::string		TTGetProcessPath();
 void			TTSleep(unsigned int milliseconds);
 char**			TTArgs();								// Retrieve the command-line parameters that were passed in to this test specifically. Terminates with a NULL.
 void			TTSetTempDir(const char* tmp);			// Set the global test directory parameter.
-std::string		TTGetTempDir();							// Get the global test temporary directory
+std::string		TTGetTempDir();							// Get the global test temporary directory, which will always end with a platform-appropriate slash
 
 std::string		TT_ToString(int v);
 std::string		TT_ToString(double v);

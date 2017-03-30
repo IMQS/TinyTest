@@ -420,6 +420,7 @@ int TestContext::ParseAndRun(int argc, char** argv)
 		}
 	}
 
+	// If a temporary directory has not been set yet, then set a default one now
 	// This is useful when running under the IDE
 	if (TTGetTempDir().length() == 0)
 		TTSetTempDir(TT_PREFIX_TESTDIR DEFAULT_TEMP_DIR);
