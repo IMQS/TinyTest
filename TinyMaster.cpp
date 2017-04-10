@@ -346,7 +346,7 @@ static void TTRun_PrepareExecutionEnvironment()
 #ifdef _WIN32
 	_set_error_mode(_OUT_TO_STDERR);									// prevent CRT dialog box popups. This doesn't work for debug builds.
 	_set_purecall_handler(TTPurecallHandler);							// pure virtual function
-	_set_invalid_parameter_handler(TTInvalidParameterHandler);		// CRT function with invalid parameters
+	_set_invalid_parameter_handler(TTInvalidParameterHandler);			// CRT function with invalid parameters
 #endif
 	signal(SIGABRT, TTSignalHandler);									// handle calls to abort()
 }
@@ -408,6 +408,7 @@ int TestContext::ParseAndRun(int argc, char** argv)
 		else if (opt[0] == ':' || opt[0] == '=')
 		{
 			IsExecutingUnderGuidance = opt[0] == '=';
+			IsExecutingUnderDebugger = opt[0] == ':';
 			singleTestName = opt.substr(1);
 		}
 		else
@@ -704,6 +705,12 @@ bool TestContext::CreateThreads()
 	GetNumCPUCores(SysNumCores, logicalCores);
 
 	int nThreads = logicalCores;
+
+	// When we're running under a debugger, then we want to minimize the number of threads, because
+	// more threads just make a debugger experience worse (ie "Thread View" bloat.. single stepping gets slower).
+	if (IsExecutingUnderDebugger)
+		nThreads = 1;
+
 	if (NumThreads > 0)
 		nThreads = NumThreads;
 

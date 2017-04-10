@@ -36,6 +36,7 @@ This file contains the utility functions that are used by testing code.
 #endif
 
 static bool  IsExecutingUnderGuidance = false;
+static bool  IsExecutingUnderDebugger = false;
 static int   MasterPID                = 0;
 static char* TestCmdLineArgs[TT_MAX_CMDLINE_ARGS + 1]; // +1 for the null terminator
 static char  TestTempDir[TT_TEMP_DIR_SIZE + 1];
