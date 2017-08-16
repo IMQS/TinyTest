@@ -573,9 +573,14 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 	return true;
 #else
 	std::vector<const char*> all;
+	std::string combinedArgs;
 	all.push_back(cmd);
-	for (size_t i = 0; args[i]; i++)
+	for (size_t i = 0; args[i]; i++) {
 		all.push_back(args[i]);
+		combinedArgs += "'";
+		combinedArgs += args[i];
+		combinedArgs += "' ";
+	}
 	all.push_back(nullptr);
 	void* mergedEnv = env ? CreateMergedEnvironmentBlock(env) : (char*) env;
 	pid_t pid       = fork();
@@ -587,7 +592,7 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 		else
 			res = execvp(cmd, (char* const*) &all[0]);
 		// execvp only returns if an error occurred
-		printf("launch of pid = %d failed (%s)\n", (int) getpid(), cmd);
+		printf("launch of pid = %d failed (%s %s)\n", (int) getpid(), cmd, combinedArgs.c_str());
 		exit(1);
 	} else {
 		// parent
