@@ -308,7 +308,7 @@ void TTShowHelp()
 		"  -xEXCLUDE           Exclude any tests that match the wildcard EXCLUDE. Excludes override includes.\n"
 		"  -tt-small           Run only small tests\n"
 		"  -tt-html            Output as HTML\n"
-		"  -tt-junit           Output as JUnit\n"
+		"  -tt-junit           Output as JUnit (see -tt-out and -tt-ident)\n"
 		"  -tt-bare            For HTML, exclude header and tail\n"
 		"  -tt-head            For HTML, output only header\n"
 		"  -tt-tail            For HTML, output only tail\n"
