@@ -573,7 +573,7 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 	return true;
 #else
 	std::vector<const char*> all;
-	std::string combinedArgs;
+	std::string              combinedArgs;
 	all.push_back(cmd);
 	for (size_t i = 0; args[i]; i++) {
 		all.push_back(args[i]);
@@ -592,7 +592,7 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 		else
 			res = execvp(cmd, (char* const*) &all[0]);
 		// execvp only returns if an error occurred
-		printf("launch of pid = %d failed (%s %s)\n", (int) getpid(), cmd, combinedArgs.c_str());
+		printf("[child] launch of pid = %d failed (%s %s)\n", (int) getpid(), cmd, combinedArgs.c_str());
 		exit(1);
 	} else {
 		// parent
@@ -608,9 +608,12 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 			// We assume that the child process is expected to run indefinitely. At least,
 			// we expect it to run at least until we return from this function. So it's safe to
 			// say that if the child has already exited, then the execvp failed.
-			// We wait for only 5ms, because the execvp fails fast if the path cannot be found.
+			// We wait for only 15ms, because the execvp fails fast if the path cannot be found.
+			// Note that I initially waited here for 5ms, but that turned out to be too short
+			// when running on a VM in Hyper-V. With a 5ms timeout, sometimes the parent process
+			// would fail to see that the child process failed on the execvp.
 			bool running = true;
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < 15; i++) {
 				int   status = 0;
 				pid_t res    = waitpid(pid, &status, WNOHANG | WUNTRACED);
 				if (res == pid) {
@@ -621,7 +624,7 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 			}
 			if (!running)
 				return false;
-			printf("launch of pid = %d succeeded (%s)\n", (int) pid, cmd);
+			printf("[parent] launch of pid = %d succeeded (%s)\n", (int) pid, cmd);
 			pid_or_status = pid;
 			return true;
 		}
