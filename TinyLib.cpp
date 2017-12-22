@@ -15,6 +15,11 @@ This file contains the utility functions that are used by testing code.
 #define _T(x) x
 #endif
 
+#ifdef __APPLE__
+#include <libproc.h>
+extern char **environ;
+#endif
+
 #include <unordered_map>
 #include <unordered_set>
 
@@ -182,13 +187,17 @@ unsigned int TTGetProcessID() {
 }
 
 std::string TTGetProcessPath() {
-	char buf[1024];
 #ifdef _WIN32
-	GetModuleFileNameA(NULL, buf, 1024);
+	char buf[1024];
+	GetModuleFileNameA(NULL, buf, sizeof(buf));
+#elif defined(__APPLE__)
+	char buf[PROC_PIDPATHINFO_MAXSIZE];
+	proc_pidpath(getpid(), buf, sizeof(buf));
 #else
-	buf[readlink("/proc/self/exe", buf, 1024 - 1)] = 0; // untested
+	char buf[1024];
+	buf[readlink("/proc/self/exe", buf, sizeof(buf) - 1)] = 0;
 #endif
-	buf[1023] = 0;
+	buf[sizeof(buf) - 1] = 0;
 	return buf;
 }
 
@@ -587,10 +596,17 @@ bool TTLaunchChildProcess_Internal(unsigned int flags, const char* cmd, const ch
 	if (pid == 0) {
 		// child
 		pid_t res;
-		if (env)
+		if (env) {
+#ifdef __APPLE__
+			// execvpe is not available on Apple
+			printf("Trying execve '%s'\n", cmd);
+			res = execve(cmd, (char* const*) &all[0], (char* const*) mergedEnv);
+#else
 			res = execvpe(cmd, (char* const*) &all[0], (char* const*) mergedEnv);
-		else
+#endif
+		} else {
 			res = execvp(cmd, (char* const*) &all[0]);
+		}
 		// execvp only returns if an error occurred
 		printf("[child] launch of pid = %d failed (%s %s)\n", (int) getpid(), cmd, combinedArgs.c_str());
 		exit(1);

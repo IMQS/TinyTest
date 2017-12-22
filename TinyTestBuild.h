@@ -26,12 +26,16 @@ TT_TestList TT_TESTS_ALL;
 #include <process.h>
 #include <signal.h>
 #else
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#include <linux/types.h>
+#endif
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <linux/types.h>
 #include <stdarg.h>
 #endif
 

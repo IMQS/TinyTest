@@ -40,7 +40,7 @@ typedef HANDLE TT_PROCESS_HANDLE;
 #define DIR_SEP_STR "/"
 #define TT_TEST_DIR "/tmp/tinytest/"
 #define TT_TEST_GLOBAL_LOCK_FILE TT_TEST_DIR "global_machine_lock"
-typedef uint TT_PROCESS_HANDLE;
+typedef unsigned TT_PROCESS_HANDLE;
 #define _In_z_
 #define _Printf_format_string_
 #endif
@@ -1097,7 +1097,7 @@ string Process::ExecuteAndWaitOnce(string exec, const vector<string>& args, doub
 		//if (-1 == execv("/bin/sh", (char **) args))
 		if (-1 == execv(exec.c_str(), (char**) &pArgs[0]))
 		{
-			printf("execv failed in forked child (%d %s %s)\n", errno, exec.c_str(), allArgs.c_str());
+			printf("execv failed in forked child (%d, '%s' '%s')\n", (int) errno, exec.c_str(), allArgs.c_str());
 			exit(1);
 		}
 		// we never get here
