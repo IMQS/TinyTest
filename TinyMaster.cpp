@@ -1086,7 +1086,8 @@ string Process::ExecuteAndWaitOnce(string exec, const vector<string>& args, doub
 		close(pipe_stderr[pipe_write]);
 
 		vector<const char*> pArgs;
-		string allArgs;
+		string allArgs; // This is just for error messages. Not sent to execv.
+		pArgs.push_back(exec.c_str());
 		for (const auto& arg : args)
 		{
 			pArgs.push_back(arg.c_str());
