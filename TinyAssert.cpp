@@ -1,28 +1,63 @@
+// clang-format off
 #include <stdio.h>
 
-TT_UNIVERSAL_FUNC bool TTIsRunningUnderMaster()
+enum class TTRunType {
+	TopLevelProcess,
+	UnderMaster,
+	UnderDebugger,
+};
+
+static TTRunType TTGetRunType()
 {
 #ifdef _WIN32
 #ifdef _UNICODE
-	OutputDebugString(GetCommandLine());
+	//OutputDebugString(GetCommandLine());
 	//printf( "IsRunningUnderMaster? %d\n", wcsstr( GetCommandLine(), L" test =" ) != nullptr );
-	return wcsstr(GetCommandLine(), L" test =") != nullptr;
+	if (wcsstr(GetCommandLine(), L" test =") != nullptr)
+		return TTRunType::UnderMaster;
+	else if (wcsstr(GetCommandLine(), L" test :") != nullptr)
+		return TTRunType::UnderDebugger;
+	else
+		return TTRunType::TopLevelProcess;
 #else
-	return strstr(GetCommandLine(), " test =") != nullptr;
+	if (strstr(GetCommandLine(), " test =") != nullptr)
+		return TTRunType::UnderMaster;
+	else if (strstr(GetCommandLine(), " test :") != nullptr)
+		return TTRunType::UnderDebugger;
+	else
+		return TTRunType::TopLevelProcess;
+
 #endif
 #else
-	bool result = true;
+	TTRunType res;
 	FILE* f = fopen("/proc/self/cmdline", "r");
 	if (f != nullptr)
 	{
 		char buf[1024];
 		int len = fread(buf, 1, 1023, f);
-		buf[len] = 0;
-		result = strstr(buf, " test =") != nullptr;
 		fclose(f);
+		if (len < 0)
+			len = 0;
+		buf[len] = 0;
+		if (strstr(buf, " test =") != nullptr)
+			res = TTRunType::UnderMaster;
+		else if (strstr(buf, " test :") != nullptr)
+			res =TTRunType::UnderDebugger;
+		else
+			res = TTRunType::TopLevelProcess;
 	}
-	return result;
+	return res;
 #endif
+}
+
+TT_UNIVERSAL_FUNC bool TTIsRunningUnderMaster()
+{
+	return TTGetRunType() == TTRunType::UnderMaster;
+}
+
+TT_UNIVERSAL_FUNC bool TTIsRunningUnderDebugger()
+{
+	return TTGetRunType() == TTRunType::UnderDebugger;
 }
 
 TT_UNIVERSAL_FUNC void TTAssertFailed(const char* exp, const char* filename, int line_number, bool die)

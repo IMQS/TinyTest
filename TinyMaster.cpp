@@ -1,3 +1,4 @@
+// clang-format off
 /*
 This file has the logic for running tests from the command line.
 This launches more instances of itself. Each of those instances runs

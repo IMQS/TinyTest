@@ -1,3 +1,4 @@
+// clang-format off
 #pragma once
 
 /*
@@ -137,6 +138,7 @@ static const int TT_TEMP_DIR_SIZE = 2048;	// The maximum number of characters in
 TT_NORETURN void TTAssertFailed(const char* expression, const char* filename, int line_number, bool die);
 
 bool			TTIsRunningUnderMaster();				// Return true if this process was launched by a master test process (implies command line of test =TheTestName)
+bool			TTIsRunningUnderDebugger();				// Return true if this process was launched by a master test process (implies command line of test :TheTestName)
 void			TTLog(const char* msg, ...);
 void			TTSetProcessIdle();						// Sets the process' priority to IDLE. This is just convenient if you're running tests while working on your dev machine.
 void			TTNotifySubProcess(unsigned int pid);	// Notify the test runner that you have launched a sub-process
