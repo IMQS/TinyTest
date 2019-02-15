@@ -36,9 +36,12 @@ static TTRunType TTGetRunType()
 		char buf[1024];
 		int len = fread(buf, 1, 1023, f);
 		fclose(f);
-		if (len < 0)
-			len = 0;
 		buf[len] = 0;
+		for (int i = 0; i < len; i++) {
+			// /proc/*/cmdline replaces whitespace with 0
+			if (buf[i] == 0)
+				buf[i] = 32;
+		}
 		if (strstr(buf, " test =") != nullptr)
 			res = TTRunType::UnderMaster;
 		else if (strstr(buf, " test :") != nullptr)
