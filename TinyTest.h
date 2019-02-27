@@ -263,6 +263,7 @@ extern TT_TestList TT_TESTS_ALL;
 #define TTASSERT(exp)		(void)( (!!(exp)) || (TTAssertFailed(#exp, __FILE__, __LINE__, true), 0) )
 #define TTASSERTEX(exp)		(void)( (!!(exp)) || (throw TTException(#exp, __FILE__, __LINE__), 0) )
 #define TTASSEQ(a, b)		{ if (!((a) == (b)))  { TTAssertFailed((std::string("'") + TT_ToString(a) + "' == '" + TT_ToString(b) + "' (" + #a + " == " + #b + ")").c_str(), __FILE__, __LINE__, true ); } }
+#define TTFAILMSG(msg)		(TTAssertFailed(msg, __FILE__, __LINE__, true), 0)
 
 // "External Module" is typically a DLL that needs to know a little bit about its testing environment,
 // or wants to call TTASSERT.
