@@ -1602,34 +1602,26 @@ void GetNumCPUCores(int& physicalCores, int& logicalCores)
 #endif
 }
 
-#define S(x) #x
-
-const char* HtmlHeadTxt = S((
+const char* HtmlHeadTxt = R"(
 								<!DOCTYPE HTML>
 								<html>
-								<head>\n
-								<style>\n
-								body	{ margin: 0; padding: 0; } \n
-								h2		{ font-size: 16pt; margin: 5pt 6pt; }  \n
-								.tests	{ padding: 5pt; }  \n
-								.test	{ font-size 10pt; padding: 2pt 4pt; background: #f8f8f8; border-radius: 5px; border: 1px solid #f0f0f0; margin-top: 1px; }  \n
-								.fail	{ color: #822; font-weight: bold; }  \n
-								.pass	{ color: #282; display: inline-block; width: 15em; }  \n
-								.detail { color: #444; margin-left: 10pt; }  \n
+								<head>
+								<style>
+								body	{ margin: 0; padding: 0; }
+								h2		{ font-size: 16pt; margin: 5pt 6pt; }
+								.tests	{ padding: 5pt; }
+								.test	{ font-size 10pt; padding: 2pt 4pt; background: #f8f8f8; border-radius: 5px; border: 1px solid #f0f0f0; margin-top: 1px; }
+								.fail	{ color: #822; font-weight: bold; }
+								.pass	{ color: #282; display: inline-block; width: 15em; }
+								.detail { color: #444; margin-left: 10pt; }
 								</style>
 								</head>
 								<body>
-								<div class='tests'>
-										\0)) + 1;
+								<div class='tests'>)";
 
-const char* HtmlTailTxt = S((
-								</div></body></html>
-								\0)) + 1;
+const char* HtmlTailTxt = "</div></body></html>";
 
-const char* JUnitTailTxt = S((
-								 </testsuite>\n
-								 \0)) + 1;
-
+const char* JUnitTailTxt = "</testsuite>";
 
 #undef DEBUG_THREADS_CX
 #undef DEBUG_THREADS
