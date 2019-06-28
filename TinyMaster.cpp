@@ -1292,6 +1292,7 @@ string Escape(bool xml, const string& s)
 		else if (s[i] == '&') r += "&amp;";
 		else if (s[i] == '\r') {}
 		else if (s[i] == '\n') r += "&#10;";
+		else if (s[i] == 27) {} // Often present in escape sequences to generate color in console output. eg printf("\033[1;34m");
 		else r += s[i];
 	}
 	return r;
