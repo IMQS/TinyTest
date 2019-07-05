@@ -17,7 +17,7 @@ This file contains the utility functions that are used by testing code.
 
 #ifdef __APPLE__
 #include <libproc.h>
-extern char **environ;
+extern char** environ;
 #endif
 
 #include <unordered_map>
@@ -244,6 +244,7 @@ std::string TTGetTempDir() {
 }
 
 std::string TT_ToString(int v) { return std::to_string(v); }
+std::string TT_ToString(size_t v) { return std::to_string(v); }
 std::string TT_ToString(double v) { return std::to_string(v); }
 std::string TT_ToString(std::string v) { return v; }
 

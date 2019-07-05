@@ -159,6 +159,7 @@ void			TTSetTempDir(const char* tmp);			// Set the global test directory paramet
 std::string		TTGetTempDir();							// Get the global test temporary directory, which will always end with a platform-appropriate slash
 
 std::string		TT_ToString(int v);
+std::string		TT_ToString(size_t v);
 std::string		TT_ToString(double v);
 std::string		TT_ToString(std::string v);
 
