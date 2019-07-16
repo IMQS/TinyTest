@@ -1387,13 +1387,19 @@ string SPrintf(_In_z_ _Printf_format_string_ const char* format, ...)
 #endif
 	va_end(va);
 
+	const char* oom = "Out of memory in TinyTest SPrintf";
+
 	va_start(va, format);
 	char* tmp = (char*) malloc(size + 1);
-	vsprintf(tmp, format, va);
+	if (tmp == nullptr)
+		tmp = const_cast<char*>(oom);
+	else
+		vsprintf(tmp, format, va);
 	va_end(va);
 
 	result = tmp;
-	free(tmp);
+	if (tmp != oom)
+		free(tmp);
 	return result;
 }
 
