@@ -352,7 +352,7 @@ static void TTInvalidParameterHandler(const wchar_t* expression, const wchar_t* 
 #endif
 
 static void TTSignalHandler(int signal) {
-	printf("Signal %d called", signal);
+	printf("Signal %d called - killing test\n", signal);
 	fflush(stdout);
 	Die();
 }

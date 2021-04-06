@@ -213,15 +213,18 @@ protected:
 	int					SysNumCores;	// Number of physical (aka whole) cores in this machine
 	mutex				QueueLock;		// Guards access to TestPos, as well as OutText
 	size_t				TestPos;		// Queue position in 'Tests'. Starts at zero and ends at Tests.size(). Guarded by QueueLock.
+	string				CatchSegVPath;	// Only used on Linux
 
 	bool		CreateThreads();
 	int			RunMaster();
+	bool		LocateCatchSegV();
 	void		ListTests();
 	int			ExecuteTestHere(const char* testname);
 	bool		TestMatchesFilter(const Test& t) const;
 	Test*		NextFilteredTest(int threadNum);
 	void		RunTestOuter(int threadNum, Test* t);
 	void		RunTestExec(string tempDir, Test* t);
+	string		TrimOutput(string output);
 	void		FlushOutput();
 	void		WriteOutputToFile();
 };
@@ -602,9 +605,7 @@ void TestContext::RunTestOuter(int threadNum, Test* t)
 		t->Output += "Failed to create test directory '" + tempDir + "'";
 	}
 
-	t->TrimmedOutput = t->Output;
-	if (t->TrimmedOutput.length() > 1000)
-		t->TrimmedOutput = "..." + t->TrimmedOutput.substr(t->TrimmedOutput.length() - 1000);
+	t->TrimmedOutput = TrimOutput(t->Output);
 
 	outText += Out->ItemPost(*t);
 	flushOutput();
@@ -616,12 +617,56 @@ void TestContext::RunTestOuter(int threadNum, Test* t)
 	}
 }
 
+string TestContext::TrimOutput(string output)
+{
+	size_t limit = 2000;
+	if (output.length() < limit)
+		return output;
+
+	// Linux (catchsegv outputs this)
+	size_t stackTraceStart = output.find("Backtrace:"); 
+	if (stackTraceStart != -1)
+	{
+		// The catchsegv Memory map is very long, and usually not what you want in a summary
+		size_t memMap = output.find("Memory map:");
+		if (memMap != -1 && memMap > stackTraceStart)
+		{
+			// Return just a few bytes beyond "Memory map:" to make sure that people know there's more
+			return "*** Segmentation fault\n\n * * * \n\n" + output.substr(stackTraceStart, 150 + memMap - stackTraceStart) + "...";
+		}
+		return output.substr(stackTraceStart, 2000) + "...";
+	}
+
+	// Windows (you'll find this string inside TinyLib.cpp)
+	stackTraceStart = output.find("Stack Trace"); 
+	if (stackTraceStart != -1)
+		return output.substr(stackTraceStart);
+
+	return "..." + output.substr(output.length() - limit);
+}
+
 void TestContext::RunTestExec(string tempDir, Test* t)
 {
 	// Warning: Take care when changing this command line. The function TTIsRunningUnderMaster() uses it's layout quite specifically.
 	string tempDirSlash = tempDir; // + DIR_SEP_STR;  --- never end a quoted string with a backslash. The backslash before the quote causes the quote to be escaped.
 	//string exec = TTGetProcessPath() + " " + TT_TOKEN_INVOKE + " =" + t->Name + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " \"" + TT_PREFIX_TESTDIR + tempDirSlash + "\"" + " " + Options;
 	vector<string> args;
+	string mainExe;
+#ifdef _WIN32
+	mainExe = TTGetProcessPath();
+#else
+	// You need to have catchsegv installed.
+	// In some brief tests that I performed, linking to libSegFault or using LD_PRELOAD=/lib/libSegFault.so produced stack traces,
+	// but the line numbers were missing (as though addr2line hadn't been called).
+	// However, if you use catchsegv, then you always get line numbers, provided you compile with debug info (-g)
+	// See some commentary here: https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
+	if (CatchSegVPath.size() != 0) {
+		mainExe = CatchSegVPath;
+		args.push_back(TTGetProcessPath());
+	} else {
+		mainExe = TTGetProcessPath();
+	}
+#endif
 	args.push_back(TT_TOKEN_INVOKE);
 	args.push_back("=" + t->Name);
 	args.push_back(TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()));
@@ -638,7 +683,7 @@ void TestContext::RunTestExec(string tempDir, Test* t)
 	int pstatus = 0;
 	double tstart = TimeSeconds();
 	Process proc(this);
-	string execError = proc.ExecuteAndWait(TTGetProcessPath(), args, t->TimeoutSeconds(), pstdOut, pstatus);
+	string execError = proc.ExecuteAndWait(mainExe, args, t->TimeoutSeconds(), pstdOut, pstatus);
 	if (execError != "")
 	{
 		pstatus = 1;
@@ -650,8 +695,17 @@ void TestContext::RunTestExec(string tempDir, Test* t)
 	if (t->Parallel == TTParallelWholeCore)
 		ExecWholeCore--;
 
+	string argsCombined = "";
+	for (auto arg: args)
+	{
+		if (argsCombined.size() == 0)
+			argsCombined = arg;
+		else
+			argsCombined += " " + arg;
+	}
+
 	t->Time = TimeSeconds() - tstart;
-	t->Output = pstdOut;
+	t->Output = "Exec " + mainExe + " " + argsCombined + "\n\n" + pstdOut;
 	t->Pass = pstatus == 0;
 }
 
@@ -761,6 +815,11 @@ int TestContext::RunMaster()
 	if (!OutputBare) OutText += Out->HeadPre(*this);
 	FlushOutput();
 
+#ifndef _WIN32
+	if (!LocateCatchSegV())
+		printf("Warning: Unable to locate catchsegv. Segfaults will not have stack traces.\n");
+#endif
+
 	TestPos = 0;
 	ExecTotal = 0;
 	ExecWholeCore = 0;
@@ -803,6 +862,23 @@ int TestContext::RunMaster()
 	WriteOutputToFile();
 
 	return (ok && npass == nrun) ? 0 : 1;
+}
+
+bool TestContext::LocateCatchSegV()
+{
+	FILE* f = popen("which catchsegv", "r");
+	if (!f)
+		return false;
+	char buf[4096];
+	size_t n = fread(buf, 1, sizeof(buf), f);
+	if (n > string("catchsegv").size() && n < sizeof(buf))
+	{
+		buf[n - 1] = 0; // remove newline
+		CatchSegVPath = buf;
+		//printf("Found catchsegv at '%s'\n", buf);
+	}
+	pclose(f);
+	return CatchSegVPath.size() != 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1092,7 +1168,9 @@ string Process::ExecuteAndWaitOnce(string exec, const vector<string>& args, doub
 		for (const auto& arg : args)
 		{
 			pArgs.push_back(arg.c_str());
-			allArgs += " " + arg;
+			if (allArgs.size() != 0)
+				allArgs += " ";
+			allArgs += arg;
 		}
 		pArgs.push_back(nullptr);
 
