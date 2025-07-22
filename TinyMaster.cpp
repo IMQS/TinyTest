@@ -1282,7 +1282,8 @@ string Process::ExecuteAndWaitOnce(string exec, const vector<string>& args, doub
 			}
 		}
 
-		rStdOut.append(&rStdOutBuf[0], rStdOutBuf.size());
+		if (rStdOutBuf.size())
+			rStdOut.append(&rStdOutBuf[0], rStdOutBuf.size());
 		// NOTE: we discard rStdErrBuf
 
 		close(pipe_stdout[pipe_read]);
