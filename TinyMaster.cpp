@@ -624,7 +624,7 @@ string TestContext::TrimOutput(string output)
 		return output;
 
 	// Linux (catchsegv outputs this)
-	size_t stackTraceStart = output.find("Backtrace:"); 
+	size_t stackTraceStart = output.find("Backtrace:");
 	if (stackTraceStart != -1)
 	{
 		// The catchsegv Memory map is very long, and usually not what you want in a summary
@@ -638,7 +638,7 @@ string TestContext::TrimOutput(string output)
 	}
 
 	// Windows (you'll find this string inside TinyLib.cpp)
-	stackTraceStart = output.find("Stack Trace"); 
+	stackTraceStart = output.find("Stack Trace");
 	if (stackTraceStart != -1)
 		return output.substr(stackTraceStart);
 
@@ -1315,7 +1315,7 @@ void Process::ReadIPC(unsigned waitMS)
 	if (haveData)
 	{
 		raw[TT_IPC_MEM_SIZE - 1] = 0;
-		char cmd[200];
+		char cmd[201];
 		unsigned u_p0 = 0;
 		// Currently the only command is "subprocess-launch", so we don't even bother to check the value of 'cmd'
 		if (sscanf(raw, "%200s %u", cmd, &u_p0) == 2)

@@ -92,7 +92,7 @@ void TT_TestList::Add(const TT_Test& t) {
 			printf("TT_TestList out of memory\n");
 			exit(1);
 		}
-		memcpy(newlist, List, sizeof(List[0]) * Count);
+		memcpy((void*) newlist, List, sizeof(List[0]) * Count);
 		free(List);
 		Capacity = newcap;
 		List     = newlist;
